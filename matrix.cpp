@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iomanip>
 #include <string>
+#include <omp.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -38,10 +39,24 @@ vector<vector<double>> readMatrix(const string& filename, int rows, int cols) {
 
 vector<vector<double>> multiplyMatrices(const vector<vector<double>>& A, const vector<vector<double>>& B, int n, int m, int p) {
     vector<vector<double>> result(n, vector<double>(p, 0.0));
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < p; ++j)
-            for (int k = 0; k < m; ++k)
-                result[i][j] += A[i][k] * B[k][j];
+
+    #pragma omp parallel num_threads(8)
+    {
+        #pragma omp for
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < p; ++j) {
+                double sum = 0.0;
+
+                #pragma omp simd reduction(+:sum)
+                for (int k = 0; k < m; ++k) {
+                    sum += A[i][k] * B[k][j];
+                }
+
+                result[i][j] = sum;
+            }
+        }
+    }
+
     return result;
 }
 
@@ -68,7 +83,7 @@ int main() {
         int n = size, m = size, p = size;
         double totalTime = 0.0;
 
-        cout << "Обработка размерности: " << size << "x" << size << "...\n";
+        cout <<"Обработка размерности: " << size << "x" << size << "...\n";
 
         for (int i = 1; i <= numPairs; ++i) {
             string fileA = "MatrixA(" + to_string(size) + ")_" + to_string(i) + ".txt";

@@ -12,10 +12,8 @@ def read_matrix(filename):
         matrix = [list(map(float, line.strip().split())) for line in lines]
     return np.array(matrix)
 
-
 def verify_multiplication(size, log_file=None):
     all_correct = True
-
     for i in range(1, NUM_FILES_PER_SIZE + 1):
         filename_A = os.path.join(INPUT_DIR, f"MatrixA({size})_{i}.txt")
         filename_B = os.path.join(INPUT_DIR, f"MatrixB({size})_{i}.txt")
@@ -46,7 +44,6 @@ def verify_multiplication(size, log_file=None):
 
     return all_correct
 
-
 def parse_timing_results(filename):
     sizes = []
     times = []
@@ -60,32 +57,38 @@ def parse_timing_results(filename):
                 times.append(float(time))
     return sizes, times
 
-
-def plot_timing(sizes, times):
-    numeric_sizes = [int(s.split('x')[0]) for s in sizes]
+def plot_multiple_timings(files_labels_colors):
     plt.figure(figsize=(10, 6))
-    plt.plot(numeric_sizes, times, marker='o', color='blue')
-    plt.title("Зависимость времени перемножения от размерности матриц")
+    
+    for filename, label, color in files_labels_colors:
+        filepath = os.path.join(INPUT_DIR, filename)
+        if not os.path.exists(filepath):
+            print(f"[Внимание] Файл {filepath} не найден. Пропуск.")
+            continue
+        sizes, times = parse_timing_results(filepath)
+        numeric_sizes = [int(s.split('x')[0]) for s in sizes]
+        plt.plot(numeric_sizes, times, marker='o', label=label, color=color)
+
+    plt.title("Сравнение времени перемножения (разные версии алгоритма)")
     plt.xlabel("Размерность матрицы (N x N)")
     plt.ylabel("Среднее время (сек)")
     plt.grid(True)
+    plt.legend()
     plt.tight_layout()
 
-    output_path = os.path.join("timing_plot.png")
+    output_path = os.path.join("timing_plot_comparison.png")
     plt.savefig(output_path, dpi=300)
     print(f"График сохранён в файл: {output_path}")
 
     plt.show()
 
-
 def main():
     timing_file = os.path.join(INPUT_DIR, "timing_results.txt")
-
     if not os.path.exists(timing_file):
         print(f"Файл {timing_file} не найден.")
         return
 
-    timing_sizes, times = parse_timing_results(timing_file)
+    timing_sizes, _ = parse_timing_results(timing_file)
     manual_sizes = [int(s.split('x')[0]) for s in timing_sizes]
 
     print("=== Проверка перемножения матриц ===")
@@ -96,9 +99,14 @@ def main():
 
     print(f"\nРезультаты проверки записаны в файл: {log_path}")
 
-    print("\n=== Построение графика времени ===")
-    plot_timing(timing_sizes, times)
-
+    # Построение графика
+    print("\n=== Построение сравнительного графика времени ===")
+    files_labels_colors = [
+        ("timing_results.txt", "Базовый алгоритм", "blue"),
+        ("timing_results(4th).txt", "4 потока", "green"),
+        ("timing_results(8th).txt", "8 потоков", "red")
+    ]
+    plot_multiple_timings(files_labels_colors)
 
 if __name__ == "__main__":
     main()
