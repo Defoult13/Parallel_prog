@@ -12,7 +12,6 @@ def read_matrix(filename):
         matrix = [list(map(float, line.strip().split())) for line in lines]
     return np.array(matrix)
 
-
 def verify_multiplication(size, log_file=None):
     all_correct = True
 
@@ -46,7 +45,6 @@ def verify_multiplication(size, log_file=None):
 
     return all_correct
 
-
 def parse_timing_results(filename):
     sizes = []
     times = []
@@ -60,23 +58,62 @@ def parse_timing_results(filename):
                 times.append(float(time))
     return sizes, times
 
+def plot_all_timings():
+    timing_files = {
+        "Последовательно": "timing_results.txt",
+        "MPI (4 процесса)": "timing_results4.txt",
+        "MPI (12 процессов)": "timing_results12.txt"
+    }
 
-def plot_timing(sizes, times):
-    numeric_sizes = [int(s.split('x')[0]) for s in sizes]
-    plt.figure(figsize=(10, 6))
-    plt.plot(numeric_sizes, times, marker='o', color='blue')
-    plt.title("Зависимость времени перемножения от размерности матриц")
+    plt.figure(figsize=(12, 7))
+    for label, filename in timing_files.items():
+        filepath = os.path.join(INPUT_DIR, filename)
+        if not os.path.exists(filepath):
+            print(f"[Предупреждение] Файл {filename} не найден, пропускаем.")
+            continue
+        sizes, times = parse_timing_results(filepath)
+        numeric_sizes = [int(s.split('x')[0]) for s in sizes]
+        plt.plot(numeric_sizes, times, marker='o', label=label)
+
+    plt.title("Сравнение времени перемножения матриц (разные реализации)")
     plt.xlabel("Размерность матрицы (N x N)")
     plt.ylabel("Среднее время (сек)")
+    plt.legend()
     plt.grid(True)
     plt.tight_layout()
 
-    output_path = os.path.join("timing_plot.png")
+    output_path = os.path.join("timing_comparison_plot.png")
     plt.savefig(output_path, dpi=300)
-    print(f"График сохранён в файл: {output_path}")
-
+    print(f"Сравнительный график сохранён в файл: {output_path}")
     plt.show()
 
+def plot_mpi_supercomputer_timings():
+    mpi_files = {
+        "MPI (4 процесса, суперкомпьютер)": "4.txt",
+        "MPI (12 процессов, суперкомпьютер)": "12.txt"
+    }
+
+    plt.figure(figsize=(10, 6))
+    for label, filename in mpi_files.items():
+        filepath = os.path.join(INPUT_DIR, filename)
+        if not os.path.exists(filepath):
+            print(f"[Предупреждение] Файл {filename} не найден, пропускаем.")
+            continue
+        sizes, times = parse_timing_results(filepath)
+        numeric_sizes = [int(s.split('x')[0]) for s in sizes]
+        plt.plot(numeric_sizes, times, marker='o', label=label)
+
+    plt.title("MPI на суперкомпьютере: сравнение 4 vs 12 процессов")
+    plt.xlabel("Размерность матрицы (N x N)")
+    plt.ylabel("Среднее время (сек)")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+
+    output_path = os.path.join("mpi_supercomputer_plot.png")
+    plt.savefig(output_path, dpi=300)
+    print(f"График MPI (суперкомпьютер) сохранён в файл: {output_path}")
+    plt.show()
 
 def main():
     timing_file = os.path.join(INPUT_DIR, "timing_results.txt")
@@ -96,9 +133,11 @@ def main():
 
     print(f"\nРезультаты проверки записаны в файл: {log_path}")
 
-    print("\n=== Построение графика времени ===")
-    plot_timing(timing_sizes, times)
+    print("\n=== Построение сравнительного графика времени ===")
+    plot_all_timings()
 
+    print("\n=== Построение графика MPI (суперкомпьютер) ===")
+    plot_mpi_supercomputer_timings()
 
 if __name__ == "__main__":
     main()
