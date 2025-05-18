@@ -1,0 +1,8 @@
+#!/bin/bash
+#SBATCH --job-name=mat_mul 
+#SBATCH --time=10:00:00 
+#SBATCH --ntasks-per-node=12 
+#sBATCH --partition batch 
+
+module load intel/mpi4
+mpirun -r ssh ./mat_mul
