@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
             auto end = chrono::high_resolution_clock::now();
 
             if (rank == 0) {
-                chrono::duration<double> duration = end - start; // Время в секундах
+                chrono::duration<double> duration = end - start;
                 timings.push_back(duration.count());
                 cout << "Size: " << dim << "x" << dim << ", launch " << run + 1
                     << ", time: " << duration.count() << " s" << endl;
